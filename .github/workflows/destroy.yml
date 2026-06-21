@@ -1,0 +1,100 @@
+name: Infrastructure - Terraform Destroy
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_destroy:
+        description: 'Type "destroy-production" to confirm'
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  validate-confirmation:
+    name: Validate Destroy Confirmation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check confirmation input
+        run: |
+          if [ "${{ github.event.inputs.confirm_destroy }}" != "destroy-production" ]; then
+            echo "Invalid confirmation. You must type exactly: destroy-production"
+            exit 1
+          fi
+          echo "Confirmation validated. Proceeding with destroy."
+
+  terraform-destroy:
+    name: Terraform Destroy
+    needs: validate-confirmation
+    runs-on: ubuntu-latest
+    environment: production-infra
+    defaults:
+      run:
+        working-directory: terraform
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.5
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Plan Destroy
+        run: terraform plan -destroy -no-color -out=destroy-plan
+
+      - name: Terraform Destroy
+        run: terraform apply -auto-approve destroy-plan
+
+      - name: Send Destroy Notification Email
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "CalmRoot Infrastructure DESTROYED"
+          to: ${{ secrets.ALERT_EMAIL }}
+          from: CalmRoot Terraform Pipeline
+          body: |
+            Infrastructure has been destroyed.
+
+            Triggered By: ${{ github.actor }}
+            Time        : ${{ github.event.head_commit.timestamp }}
+
+            All AWS resources provisioned by Terraform have been removed.
+
+            Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: Send Failure Email
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "CalmRoot Infrastructure Destroy FAILED"
+          to: ${{ secrets.ALERT_EMAIL }}
+          from: CalmRoot Terraform Pipeline
+          body: |
+            Terraform destroy FAILED. Resources may still exist.
+
+            Triggered By: ${{ github.actor }}
+
+            Check AWS console immediately.
+
+            Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

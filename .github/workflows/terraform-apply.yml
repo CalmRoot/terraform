@@ -1,0 +1,143 @@
+name: Infrastructure - Terraform
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+  security-events: write
+
+jobs:
+  terraform-checks:
+    name: Terraform Checks and Plan
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.5
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Security Scan
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          working_directory: terraform
+          soft_fail: false
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -out=tfplan
+
+      - name: Upload Terraform Plan Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: terraform/tfplan
+          retention-days: 5
+
+      - name: Export Terraform Plan Text
+        if: github.event_name == 'pull_request'
+        run: terraform show -no-color tfplan > plan.txt
+
+      - name: Comment Terraform Plan on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('terraform/plan.txt', 'utf8');
+            const truncated = plan.length > 60000
+              ? plan.substring(0, 60000) + '\n\n... output truncated ...'
+              : plan;
+
+            const body = [
+              '## Terraform Plan Output',
+              '',
+              'Review the plan before merging.',
+              '',
+              '<details>',
+              '<summary>Click to expand</summary>',
+              '',
+              '```hcl',
+              truncated,
+              '```',
+              '',
+              '</details>'
+            ].join('\n');
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });
+
+  terraform-apply:
+    name: Terraform Apply
+    needs: terraform-checks
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: production-infra
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.5
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Download Terraform Plan Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan
+          path: terraform
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan

@@ -1,0 +1,32 @@
+# Terraform state - NEVER COMMIT
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars.backup
+
+# Sensitive variable files
+*.tfvars.local
+secrets.tfvars
+
+# Environment files
+.env
+.env.*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Lambda build artifacts
+lambda/*/node_modules/
+lambda/*/*.zip
+
+# Logs
+*.log
+crash.log
+.terraform/
