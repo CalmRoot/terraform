@@ -8,10 +8,9 @@ set -euo pipefail
 # Disable AWS CLI interactive paging
 export AWS_PAGER=""
 
-AWS_ACCOUNT_ID="006805625766"
+AWS_ACCOUNT_ID="533016149519"
 AWS_REGION="us-east-1"
 ROLE_NAME="calmroot-github-actions-role"
-GITHUB_REPO="Bharath-1602/CalmRoot"
 
 echo "Setting up GitHub Actions OIDC federation..."
 
@@ -30,7 +29,7 @@ fi
 
 # 2. Create GitHub Actions IAM trust policy JSON file
 TRUST_POLICY_FILE="trust-policy-temp.json"
-cat <<EOF > "$TRUST_POLICY_FILE"
+cat <<POLICY > "$TRUST_POLICY_FILE"
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -45,13 +44,17 @@ cat <<EOF > "$TRUST_POLICY_FILE"
           "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
         },
         "StringLike": {
-          "token.actions.githubusercontent.com:sub": "repo:${GITHUB_REPO}:*"
+          "token.actions.githubusercontent.com:sub": [
+            "repo:CalmRoot/services:*",
+            "repo:CalmRoot/terraform:*",
+            "repo:CalmRoot/gitops:*"
+          ]
         }
       }
     }
   ]
 }
-EOF
+POLICY
 
 # 3. Create IAM Role
 if aws iam get-role --role-name "$ROLE_NAME" >/dev/null 2>&1; then
@@ -67,7 +70,7 @@ else
         --description "CalmRoot EKS deployment role for GitHub Actions pipelines"
 fi
 
-# 4. Attach policy (AdministratorAccess for simplicity in dev account)
+# 4. Attach policy
 echo "Attaching AdministratorAccess policy to role '$ROLE_NAME'..."
 aws iam attach-role-policy \
     --role-name "$ROLE_NAME" \
@@ -75,9 +78,11 @@ aws iam attach-role-policy \
 
 rm -f "$TRUST_POLICY_FILE"
 
+echo ""
 echo "GitHub Actions OIDC setup complete!"
 echo "Role ARN: arn:aws:iam::$AWS_ACCOUNT_ID:role/$ROLE_NAME"
-echo "Please add the following variables/secrets to your GitHub repository settings:"
-echo "  AWS_ROLE_ARN: arn:aws:iam::$AWS_ACCOUNT_ID:role/$ROLE_NAME"
-echo "  AWS_REGION: $AWS_REGION"
-echo "  AWS_ACCOUNT_ID: $AWS_ACCOUNT_ID"
+echo ""
+echo "Add these to GitHub Organization Secrets:"
+echo "  AWS_ROLE_ARN:    arn:aws:iam::$AWS_ACCOUNT_ID:role/$ROLE_NAME"
+echo "  AWS_REGION:      $AWS_REGION"
+echo "  AWS_ACCOUNT_ID:  $AWS_ACCOUNT_ID"

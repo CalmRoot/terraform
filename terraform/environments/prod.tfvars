@@ -1,4 +1,4 @@
-aws_account_id         = "006805625766"
+aws_account_id         = "533016149519"
 aws_region             = "us-east-1"
 project_name           = "calmroot"
 environment            = "production"

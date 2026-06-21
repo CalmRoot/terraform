@@ -1,4 +1,4 @@
-aws_account_id         = "006805625766"
+aws_account_id         = "533016149519"
 aws_region             = "us-east-1"
 project_name           = "calmroot"
 environment            = "production"
@@ -10,7 +10,7 @@ github_username        = "CalmRoot"
 github_repo            = "services"
 alert_email            = "bharath70135@gmail.com"
 domain_name            = "calmroot-project.online"
-nlb_dns_name           = "calmroot-nlb-19859e6801dff8b4.elb.us-east-1.amazonaws.com"
+nlb_dns_name           = "placeholder-calmroot-nlb.elb.us-east-1.amazonaws.com"
 eks_cluster_version    = "1.31"
 eks_node_instance_type = "t3.medium"
 eks_node_min_size      = 2
@@ -18,4 +18,3 @@ eks_node_max_size      = 4
 eks_node_desired_size  = 2
 bastion_instance_type  = "t3.micro"
 k8s_namespace          = "production"
-# CalmRoot Infrastructure - Terraform Sun Jun 21 12:05:19 IST 2026
