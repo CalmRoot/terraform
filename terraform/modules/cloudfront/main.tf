@@ -44,6 +44,47 @@ resource "aws_s3_bucket_public_access_block" "logs" {
   restrict_public_buckets = true
 }
 
+# Bucket policy to explicitly allow CloudFront logging service
+resource "aws_s3_bucket_policy" "logs" {
+  depends_on = [
+    aws_s3_bucket_ownership_controls.logs,
+    aws_s3_bucket_acl.logs,
+    aws_s3_bucket_public_access_block.logs
+  ]
+  bucket = aws_s3_bucket.logs.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowCloudFrontLogging"
+        Effect = "Allow"
+        Principal = {
+          Service = "delivery.logs.amazonaws.com"
+        }
+        Action = [
+          "s3:GetBucketAcl",
+          "s3:PutBucketAcl",
+          "s3:PutObject"
+        ]
+        Resource = [
+          aws_s3_bucket.logs.arn,
+          "${aws_s3_bucket.logs.arn}/*"
+        ]
+      },
+      {
+        Sid    = "AllowCloudFrontServicePrincipal"
+        Effect = "Allow"
+        Principal = {
+          Service = "cloudfront.amazonaws.com"
+        }
+        Action   = "s3:PutObject"
+        Resource = "${aws_s3_bucket.logs.arn}/*"
+      }
+    ]
+  })
+}
+
 # Lifecycle log retention
 resource "aws_s3_bucket_lifecycle_configuration" "logs" {
   bucket = aws_s3_bucket.logs.id
@@ -59,6 +100,11 @@ resource "aws_s3_bucket_lifecycle_configuration" "logs" {
 
 # 2. CloudFront Distribution
 resource "aws_cloudfront_distribution" "main" {
+  depends_on = [
+    aws_s3_bucket_policy.logs,
+    aws_s3_bucket_acl.logs
+  ]
+
   enabled             = true
   is_ipv6_enabled     = true
   http_version        = "http2and3"
@@ -107,9 +153,7 @@ resource "aws_cloudfront_distribution" "main" {
     }
   }
 
-  # --- Cache Behaviors ---
-
-  # 1. API Cache Behavior (No Caching, Passes cookies/headers)
+  # API Cache Behavior (No Caching)
   ordered_cache_behavior {
     path_pattern     = "/api/*"
     target_origin_id = "calmroot-nlb-origin"
@@ -118,12 +162,12 @@ resource "aws_cloudfront_distribution" "main" {
     cached_methods  = ["GET", "HEAD"]
     compress        = true
 
-    cache_policy_id          = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad" # CachingDisabled Managed Policy
-    origin_request_policy_id = "b689b0a8-53d0-40ab-baf2-68738e2966ac" # AllViewerExceptHostHeader Managed Policy
+    cache_policy_id          = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
+    origin_request_policy_id = "b689b0a8-53d0-40ab-baf2-68738e2966ac"
     viewer_protocol_policy   = "redirect-to-https"
   }
 
-  # 2. Frontend Cache Behavior (Default, Cache everything)
+  # Frontend Cache Behavior (Default)
   default_cache_behavior {
     target_origin_id = "calmroot-frontend-origin"
 
@@ -131,11 +175,10 @@ resource "aws_cloudfront_distribution" "main" {
     cached_methods  = ["GET", "HEAD"]
     compress        = true
 
-    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6" # CachingOptimized Managed Policy
+    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6"
     viewer_protocol_policy = "redirect-to-https"
   }
 
-  # --- Single Page Application Routing (Error Handlers) ---
   custom_error_response {
     error_code            = 404
     response_code         = 200
