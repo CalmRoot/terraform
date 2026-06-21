@@ -96,7 +96,7 @@ output "argocd_role_arn" {
 }
 
 output "action_required" {
-  value = <<-EOT
+  value       = <<-EOT
   ╔══════════════════════════════════════════════════╗
   ║   ⚠️  ACTION REQUIRED — UPDATE NAMESERVERS      ║
   ╠══════════════════════════════════════════════════╣

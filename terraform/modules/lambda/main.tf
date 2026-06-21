@@ -1,6 +1,4 @@
-# ==========================================
 # Data Archives for Lambda Deployment
-# ==========================================
 data "archive_file" "daily_export" {
   type        = "zip"
   source_dir  = "${path.module}/../../lambda/dailyExport"
@@ -13,9 +11,7 @@ data "archive_file" "alarm_notifier" {
   output_path = "${path.module}/files/alarm_notifier.zip"
 }
 
-# ==========================================
 # IAM Roles & Policies for Daily Export Lambda
-# ==========================================
 resource "aws_iam_role" "daily_export" {
   name = "calmroot-${terraform.workspace}-daily-export-role"
 
@@ -92,9 +88,7 @@ resource "aws_iam_role_policy" "daily_export" {
   })
 }
 
-# ==========================================
 # IAM Roles & Policies for Alarm Notifier Lambda
-# ==========================================
 resource "aws_iam_role" "alarm_notifier" {
   name = "calmroot-${terraform.workspace}-alarm-notifier-role"
 
@@ -165,9 +159,7 @@ resource "aws_iam_role_policy" "alarm_notifier" {
   })
 }
 
-# ==========================================
 # Lambda Functions
-# ==========================================
 
 # 1. Daily Export Lambda
 resource "aws_lambda_function" "daily_export" {
@@ -215,9 +207,7 @@ resource "aws_lambda_function" "alarm_notifier" {
   }
 }
 
-# ==========================================
 # EventBridge Rules & Triggers (Daily at Midnight UTC)
-# ==========================================
 resource "aws_cloudwatch_event_rule" "daily_export" {
   name                = "calmroot-${terraform.workspace}-daily-export-trigger"
   description         = "Trigger daily assessments and mood logs S3 export at midnight UTC"
@@ -242,9 +232,7 @@ resource "aws_lambda_permission" "allow_eventbridge" {
   source_arn    = aws_cloudwatch_event_rule.daily_export.arn
 }
 
-# ==========================================
 # SNS Invocation Permission for Alarm Notifier
-# ==========================================
 resource "aws_lambda_permission" "allow_sns" {
   statement_id  = "AllowExecutionFromSNS"
   action        = "lambda:InvokeFunction"

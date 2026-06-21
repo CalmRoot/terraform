@@ -1,6 +1,4 @@
-# ═══════════════════════════════════════════════
 # PASS 1: Core Infrastructure (no dependencies)
-# ═══════════════════════════════════════════════
 
 module "security" {
   source          = "./modules/security"
@@ -70,9 +68,7 @@ module "waf" {
   project_name = var.project_name
 }
 
-# ═══════════════════════════════════════════════
 # PASS 2: Route53 Zone ONLY (just the zone)
-# ═══════════════════════════════════════════════
 
 module "route53" {
   source       = "./modules/route53"
@@ -80,9 +76,7 @@ module "route53" {
   domain_name  = var.domain_name
 }
 
-# ═══════════════════════════════════════════════
 # PASS 3: ACM Certificate (needs zone_id)
-# ═══════════════════════════════════════════════
 
 module "acm" {
   source      = "./modules/acm"
@@ -91,9 +85,7 @@ module "acm" {
   depends_on  = [module.route53]
 }
 
-# ═══════════════════════════════════════════════
 # PASS 4: CloudFront (needs cert + WAF)
-# ═══════════════════════════════════════════════
 
 module "cloudfront" {
   source                   = "./modules/cloudfront"
@@ -107,9 +99,7 @@ module "cloudfront" {
   depends_on               = [module.acm, module.waf]
 }
 
-# ═══════════════════════════════════════════════
 # PASS 5: Route53 Records (needs CloudFront)
-# ═══════════════════════════════════════════════
 
 resource "aws_route53_record" "apex" {
   zone_id = module.route53.zone_id
@@ -131,9 +121,7 @@ resource "aws_route53_record" "www" {
   records = [var.domain_name]
 }
 
-# ═══════════════════════════════════════════════
 # PASS 6: Monitoring
-# ═══════════════════════════════════════════════
 
 module "monitoring" {
   source                     = "./modules/monitoring"
