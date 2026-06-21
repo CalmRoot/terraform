@@ -10,7 +10,7 @@ export AWS_PAGER=""
 CLUSTER_NAME="calmroot-prod"
 AWS_REGION="us-east-1"
 AWS_ACCOUNT_ID="006805625766"
-NAMESPACE="calmroot-prod"
+NAMESPACE="production"
 
 echo "=================================================================="
 echo "☸️  Bootstrapping CalmRoot EKS Cluster and GitOps Setup"
@@ -76,7 +76,7 @@ helm repo add argo https://argoproj.github.io/argo-helm
 helm repo update
 helm upgrade --install argocd argo/argo-cd \
   -n argocd --create-namespace \
-  -f argocd/install/argocd-values.yaml \
+  -f ../calmroot-gitops/argocd/install/argocd-values.yaml \
   --wait --timeout 5m
 
 # Wait for ArgoCD server pods
@@ -97,8 +97,8 @@ echo "Creating GitHub Repository secret in ArgoCD..."
 kubectl create secret generic calmroot-repo \
   -n argocd \
   --from-literal=type=git \
-  --from-literal=url="https://github.com/Bharath-1602/CalmRoot.git" \
-  --from-literal=username="Bharath-1602" \
+  --from-literal=url="https://github.com/CalmRoot/gitops.git" \
+  --from-literal=username="git" \
   --from-literal=password="$MANIFEST_REPO_PAT" \
   --dry-run=client -o yaml | kubectl apply -f -
 
@@ -108,10 +108,10 @@ kubectl label secret calmroot-repo \
 
 # 10. Apply ArgoCD AppProject and Application Manifests
 echo "Applying ArgoCD calmroot project..."
-kubectl apply -f argocd/project.yaml
+kubectl apply -f ../calmroot-gitops/argocd/project.yaml
 
 echo "Applying ArgoCD calmroot application..."
-kubectl apply -f argocd/application.yaml
+kubectl apply -f ../calmroot-gitops/argocd/application.yaml
 
 echo "=================================================================="
 echo "🎉 CalmRoot Bootstrap Complete!"
