@@ -25,7 +25,7 @@ variable "vpc_cidr" {
 variable "github_username" {
   type        = string
   description = "The GitHub username or org name"
-  default     = "Bharath-1602"
+  default     = "CalmRoot"
 }
 
 variable "github_repo" {
