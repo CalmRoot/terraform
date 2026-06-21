@@ -9,7 +9,7 @@ export AWS_PAGER=""
 
 CLUSTER_NAME="calmroot-prod"
 AWS_REGION="us-east-1"
-AWS_ACCOUNT_ID="006805625766"
+AWS_ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
 NAMESPACE="production"
 
 echo "=================================================================="
