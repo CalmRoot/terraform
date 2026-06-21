@@ -1,7 +1,7 @@
 # Data Archives for Lambda Deployment
 data "archive_file" "daily_export" {
   type        = "zip"
-  source_dir  = "${path.module}/../../lambda/dailyExport"
+  source_dir  = "${path.module}/../../../lambda/dailyExport"
   output_path = "${path.module}/files/daily_export.zip"
 }
 
