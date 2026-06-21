@@ -18,3 +18,4 @@ eks_node_max_size      = 4
 eks_node_desired_size  = 2
 bastion_instance_type  = "t3.micro"
 k8s_namespace          = "production"
+# CalmRoot Infrastructure - Terraform Sun Jun 21 12:05:19 IST 2026
