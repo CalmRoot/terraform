@@ -43,18 +43,18 @@ resource "aws_iam_policy" "auth_service_policy" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid      = "DynamoDBAccess"
-        Effect   = "Allow"
-        Action   = "dynamodb:*"
+        Sid    = "DynamoDBAccess"
+        Effect = "Allow"
+        Action = "dynamodb:*"
         Resource = [
           var.users_table_arn,
           "${var.users_table_arn}/index/*"
         ]
       },
       {
-        Sid      = "DynamoDBQueryLogs"
-        Effect   = "Allow"
-        Action   = "dynamodb:Query"
+        Sid    = "DynamoDBQueryLogs"
+        Effect = "Allow"
+        Action = "dynamodb:Query"
         Resource = [
           var.mood_logs_table_arn,
           "${var.mood_logs_table_arn}/index/*"
@@ -151,9 +151,9 @@ resource "aws_iam_policy" "assessment_service_policy" {
         ]
       },
       {
-        Sid      = "DynamoDBQueryUsers"
-        Effect   = "Allow"
-        Action   = "dynamodb:Query"
+        Sid    = "DynamoDBQueryUsers"
+        Effect = "Allow"
+        Action = "dynamodb:Query"
         Resource = [
           var.users_table_arn,
           "${var.users_table_arn}/index/*"

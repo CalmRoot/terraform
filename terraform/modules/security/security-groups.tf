@@ -25,8 +25,8 @@ resource "aws_security_group" "eks_nodes" {
   vpc_id      = var.vpc_id
 
   tags = {
-    Name                                        = "${var.project_name}-eks-nodes-sg"
-    "kubernetes.io/cluster/calmroot-prod"       = "owned"
+    Name                                  = "${var.project_name}-eks-nodes-sg"
+    "kubernetes.io/cluster/calmroot-prod" = "owned"
   }
 }
 

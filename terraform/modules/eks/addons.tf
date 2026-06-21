@@ -6,7 +6,7 @@ resource "aws_eks_addon" "vpc_cni" {
   addon_name                  = "vpc-cni"
   resolve_conflicts_on_create = "OVERWRITE"
   resolve_conflicts_on_update = "OVERWRITE"
-  tags = { Name = "calmroot-vpc-cni" }
+  tags                        = { Name = "calmroot-vpc-cni" }
 }
 
 resource "aws_eks_addon" "kube_proxy" {
@@ -14,7 +14,7 @@ resource "aws_eks_addon" "kube_proxy" {
   addon_name                  = "kube-proxy"
   resolve_conflicts_on_create = "OVERWRITE"
   resolve_conflicts_on_update = "OVERWRITE"
-  tags = { Name = "calmroot-kube-proxy" }
+  tags                        = { Name = "calmroot-kube-proxy" }
 }
 
 resource "aws_eks_addon" "coredns" {
@@ -22,6 +22,6 @@ resource "aws_eks_addon" "coredns" {
   addon_name                  = "coredns"
   resolve_conflicts_on_create = "OVERWRITE"
   resolve_conflicts_on_update = "OVERWRITE"
-  depends_on = [aws_eks_node_group.workers]
-  tags = { Name = "calmroot-coredns" }
+  depends_on                  = [aws_eks_node_group.workers]
+  tags                        = { Name = "calmroot-coredns" }
 }

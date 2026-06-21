@@ -6,23 +6,17 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import datetime
 
-# =====================================================
 # AWS CLIENTS
-# =====================================================
 region = os.environ.get('AWS_REGION', 'us-east-1')
 ses = boto3.client('ses', region_name=region)
 
-# =====================================================
 # EMAIL CONFIGURATION
-# =====================================================
 ops_email = os.environ.get('OPS_EMAIL', 'bharath70135@gmail.com')
 SENDER = ops_email
 RECIPIENT = ops_email
 ENVIRONMENT = os.environ.get('ENVIRONMENT', 'production')
 
-# =====================================================
 # MAIN LAMBDA FUNCTION
-# =====================================================
 def lambda_handler(event, context):
     print("Received event:", json.dumps(event))
 
@@ -46,9 +40,7 @@ def lambda_handler(event, context):
             description = "No description provided"
             formatted_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
 
-            # =====================================================
             # CLOUDWATCH ALARM EVENTS
-            # =====================================================
             if 'AlarmName' in msg:
                 alarm_name = str(msg.get('AlarmName', 'Unknown Alarm') or 'Unknown Alarm')
                 new_state = str(msg.get('NewStateValue', 'UNKNOWN') or 'UNKNOWN')
@@ -82,9 +74,7 @@ def lambda_handler(event, context):
                 description = reason
                 subject = f"{emoji} {alarm_name} - {new_state}"
 
-            # =====================================================
             # AUTO SCALING EVENTS
-            # =====================================================
             elif 'AutoScalingGroupName' in msg or 'Event' in msg:
                 event_type = str(msg.get('Event', 'Unknown Event') or 'Unknown Event')
                 asg = str(msg.get('AutoScalingGroupName', 'Unknown ASG') or 'Unknown ASG')
@@ -119,17 +109,13 @@ def lambda_handler(event, context):
                 description = f"Instance ID: {instance}\nASG: {asg}\nCause: {cause}"
                 subject = f"{emoji} {title} | {asg}"
 
-            # =====================================================
             # OTHER EVENT PAYLOADS
-            # =====================================================
             else:
                 alarm_name = "System Alert"
                 description = str(msg.get('Message', raw_message) or raw_message)
                 subject = f"⚙️ CalmRoot System Event"
 
-            # =====================================================
             # BEAUTIFUL HTML EMAIL TEMPLATE
-            # =====================================================
             html_body = f"""<!DOCTYPE html>
 <html>
 <head>
@@ -198,9 +184,7 @@ def lambda_handler(event, context):
 </body>
 </html>"""
 
-            # =====================================================
             # MIME EMAIL CREATION
-            # =====================================================
             email_msg = MIMEMultipart('alternative')
             email_msg['Subject'] = subject
             email_msg['From'] = SENDER
@@ -209,9 +193,7 @@ def lambda_handler(event, context):
             html_part = MIMEText(html_body, 'html')
             email_msg.attach(html_part)
 
-            # =====================================================
             # SEND EMAIL USING SES (Sending as raw bytes)
-            # =====================================================
             response = ses.send_raw_email(
                 Source=SENDER,
                 Destinations=[RECIPIENT],
