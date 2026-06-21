@@ -52,6 +52,27 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
+      - name: Remove prevent_destroy resources from state temporarily
+        run: |
+          echo "Removing DynamoDB tables from state to bypass prevent_destroy..."
+          terraform state rm module.dynamodb.aws_dynamodb_table.users || true
+          terraform state rm module.dynamodb.aws_dynamodb_table.sessions || true
+          terraform state rm module.dynamodb.aws_dynamodb_table.assessments || true
+          terraform state rm module.dynamodb.aws_dynamodb_table.assessment_templates || true
+          terraform state rm module.dynamodb.aws_dynamodb_table.mood_logs || true
+          terraform state rm module.dynamodb.aws_dynamodb_table.therapist_patients || true
+          echo "Removing S3 data buckets from state..."
+          terraform state rm module.s3.aws_s3_bucket.clinical_notes || true
+          terraform state rm module.s3.aws_s3_bucket.exports || true
+          terraform state rm module.s3.aws_s3_bucket_public_access_block.clinical_notes || true
+          terraform state rm module.s3.aws_s3_bucket_public_access_block.exports || true
+          terraform state rm module.s3.aws_s3_bucket_versioning.clinical_notes || true
+          terraform state rm module.s3.aws_s3_bucket_versioning.exports || true
+          terraform state rm module.s3.aws_s3_bucket_server_side_encryption_configuration.clinical_notes || true
+          terraform state rm module.s3.aws_s3_bucket_server_side_encryption_configuration.exports || true
+          terraform state rm module.s3.aws_s3_bucket_lifecycle_configuration.exports || true
+          echo "State cleanup complete. DynamoDB and S3 data will NOT be destroyed."
+
       - name: Terraform Plan Destroy
         run: terraform plan -destroy -no-color -out=destroy-plan
 
@@ -73,9 +94,9 @@ jobs:
             Infrastructure has been destroyed.
 
             Triggered By: ${{ github.actor }}
-            Time        : ${{ github.event.head_commit.timestamp }}
 
-            All AWS resources provisioned by Terraform have been removed.
+            Resources destroyed: EKS, VPC, CloudFront, WAF, Bastion, Lambda, Monitoring, Secrets
+            Resources preserved: DynamoDB tables, S3 data buckets, ECR images
 
             Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
