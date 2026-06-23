@@ -77,18 +77,30 @@ resource "aws_instance" "bastion" {
   metadata_options {
     http_endpoint               = "enabled"
     http_tokens                 = "required"
-    http_put_response_hop_limit = 1
+    http_put_response_hop_limit = 2
   }
 
-  user_data = base64encode(<<-EOF
+  user_data = base64encode(<<-USERDATA
     #!/bin/bash
-    yum update -y
-    yum install -y aws-cli kubectl
+    set -xe
+
+    # Update system
+    dnf update -y
+
+    # Ensure SSM agent is running
+    systemctl enable amazon-ssm-agent
+    systemctl restart amazon-ssm-agent
+
+    # Install kubectl
     curl -o /usr/local/bin/kubectl https://s3.us-west-2.amazonaws.com/amazon-eks/1.31.0/2024-09-12/bin/linux/amd64/kubectl
     chmod +x /usr/local/bin/kubectl
+
+    # Install AWS CLI (usually pre-installed on AL2023)
+    dnf install -y aws-cli || true
+
     echo "Bastion host ready. Use SSM Session Manager to connect."
     echo "Run: aws eks update-kubeconfig --name ${var.cluster_name} --region ${var.aws_region}"
-  EOF
+  USERDATA
   )
 
   tags = {
