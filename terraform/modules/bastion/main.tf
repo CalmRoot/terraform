@@ -82,24 +82,19 @@ resource "aws_instance" "bastion" {
 
   user_data = base64encode(<<-USERDATA
     #!/bin/bash
-    set -xe
 
-    # Update system
-    dnf update -y
+    # Install SSM agent via direct RPM
+    dnf install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
 
-    # Ensure SSM agent is running
+    # Enable and start
     systemctl enable amazon-ssm-agent
-    systemctl restart amazon-ssm-agent
+    systemctl start amazon-ssm-agent
 
     # Install kubectl
     curl -o /usr/local/bin/kubectl https://s3.us-west-2.amazonaws.com/amazon-eks/1.31.0/2024-09-12/bin/linux/amd64/kubectl
     chmod +x /usr/local/bin/kubectl
 
-    # Install AWS CLI (usually pre-installed on AL2023)
-    dnf install -y aws-cli || true
-
-    echo "Bastion host ready. Use SSM Session Manager to connect."
-    echo "Run: aws eks update-kubeconfig --name ${var.cluster_name} --region ${var.aws_region}"
+    echo "Bastion bootstrap complete"
   USERDATA
   )
 

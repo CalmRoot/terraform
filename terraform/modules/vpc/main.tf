@@ -168,7 +168,10 @@ locals {
     sts             = "com.amazonaws.us-east-1.sts"
     logs            = "com.amazonaws.us-east-1.logs"
     # ses             = "com.amazonaws.us-east-1.email-smtp"
-    monitoring = "com.amazonaws.us-east-1.monitoring"
+    monitoring  = "com.amazonaws.us-east-1.monitoring"
+    ssm         = "com.amazonaws.us-east-1.ssm"
+    ssmmessages = "com.amazonaws.us-east-1.ssmmessages"
+    ec2messages = "com.amazonaws.us-east-1.ec2messages"
   }
 }
 
