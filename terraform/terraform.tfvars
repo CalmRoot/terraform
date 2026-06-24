@@ -19,3 +19,4 @@ eks_node_desired_size  = 3
 bastion_instance_type  = "t3.micro"
 k8s_namespace          = "production"
 # retrigger after import fix 2026-06-21
+# trigger pipeline Wed Jun 24 18:40:04 IST 2026
